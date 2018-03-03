@@ -684,8 +684,6 @@ class HTTPUpgradeTestCase: XCTestCase {
         let request = "OPTIONS * HTTP/1.1\r\nHost: localhost\r\nUpgrade: myproto\r\nConnection: upgrade\r\n\r\n"
         XCTAssertNoThrow(try client.writeAndFlush(NIOAny(ByteBuffer.forString(request))).wait())
 
-        g.wait()
-
         // Ok, we don't think this upgrade should have succeeded yet, but neither should it have failed. We want to
         // dispatch onto the client event loop and check that the channel is still up, and that the complete promise
         // is still unfulfilled (because the server-side channel isn't closed).
@@ -694,11 +692,14 @@ class HTTPUpgradeTestCase: XCTestCase {
             XCTAssertFalse(completePromise.futureResult.fulfilled)
         }.wait()
 
+        g.wait()
+
         // Ok, let's unblock the upgrade now. The machinery should do its thing.
         try server.eventLoop.submit {
             upgrader.unblockUpgrade()
         }.wait()
         XCTAssertNoThrow(try completePromise.futureResult.wait())
+        XCTAssertTrue(completePromise.futureResult.fulfilled)
         client.close(promise: nil)
         try client.pipeline.assertDoesNotContain(handler: handler)
     }
