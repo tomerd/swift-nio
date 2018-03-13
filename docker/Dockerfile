@@ -4,7 +4,7 @@ MAINTAINER tomerd@apple.com
 ARG DEBIAN_FRONTEND=noninteractive
 
 # do not start services during installation as this will fail and log a warning / error.
-RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d 
+RUN echo "#!/bin/sh\nexit 0" > /usr/sbin/policy-rc.d
 
 # local
 RUN locale-gen en_US en_US.UTF-8
@@ -28,7 +28,7 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-5.0 100
 RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-5.0 100
 
 # modern curl
-RUN apt-get install -y build-essential libssl-dev
+RUN apt-get install -y build-essential libssl-dev libcurl4-openssl-dev
 RUN mkdir $HOME/.curl
 RUN wget -q https://curl.haxx.se/download/curl-7.50.3.tar.gz -O $HOME/curl.tar.gz
 RUN tar xzf $HOME/curl.tar.gz --directory $HOME/.curl --strip-components=1
