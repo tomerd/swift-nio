@@ -1,6 +1,6 @@
 # this file is not designed to be run directly
 # instead, use the docker-compose.<os>.<swift> files
-# eg docker-compose -f docker/docker-compose.yaml -f docker/docker-compose.1604.41.yaml run test
+# eg docker-compose -f docker/docker-compose.yaml -f docker/docker-compose.1804.50.yaml run test
 version: "3"
 
 services:
@@ -19,9 +19,19 @@ services:
       - ..:/code
     working_dir: /code
 
+  shell:
+    <<: *common
+    entrypoint: /bin/bash -l
+
   sanity:
     <<: *common
     command: /bin/bash -cl "./scripts/sanity.sh"
+
+  docs:
+    <<: *common
+    environment:
+      - CI
+    command: /bin/bash -cl "./scripts/generate_docs.sh"
 
   unit-tests:
     <<: *common
@@ -34,6 +44,8 @@ services:
   test:
     <<: *common
     command: /bin/bash -cl "swift test -Xswiftc -DNIO_CI_BUILD && ./scripts/integration_tests.sh"
+
+  # samples
 
   echo:
     <<: *common

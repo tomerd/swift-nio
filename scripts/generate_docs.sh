@@ -13,7 +13,7 @@
 ##
 ##===----------------------------------------------------------------------===##
 
-set -e
+set -ex
 
 my_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 root_path="$my_path/.."
@@ -26,7 +26,7 @@ if [[ "$(uname -s)" == "Linux" ]]; then
     swift build
   fi
   # setup source-kitten if required
-  source_kitten_source_path="$root_path/.SourceKitten"
+  source_kitten_source_path="$root_path/.build/SourceKittenSource"
   if [[ ! -d "$source_kitten_source_path" ]]; then
     git clone https://github.com/jpsim/SourceKitten.git "$source_kitten_source_path"
   fi
@@ -44,13 +44,15 @@ if [[ "$(uname -s)" == "Linux" ]]; then
   done
 fi
 
-[[ -d docs/$version ]] || mkdir -p docs/$version
 [[ -d swift-nio.xcodeproj ]] || swift package generate-xcodeproj
 
 # run jazzy
 if ! command -v jazzy > /dev/null; then
   gem install jazzy --no-ri --no-rdoc
 fi
+
+tmp=`mktemp -d`
+mkdir -p "$tmp/docs/$version"
 module_switcher="docs/$version/README.md"
 jazzy_args=(--clean
             --author 'SwiftNIO Team'
@@ -83,7 +85,7 @@ For the API documentation of the other repositories in the SwiftNIO family check
 EOF
 
 for module in "${modules[@]}"; do
-  args=("${jazzy_args[@]}"  --output "$root_path/docs/$version/$module" --module "$module"
+  args=("${jazzy_args[@]}" --output "$tmp/docs/$version/$module" --docset-path "$tmp/docset/$version/$module" --module "$module"
         --module-version $version
         --root-url "https://apple.github.io/swift-nio/docs/$version/$module")
   if [[ -f "$root_path/.build/sourcekitten/$module.json" ]]; then
@@ -98,15 +100,17 @@ if [[ $CI == true ]]; then
   GIT_AUTHOR=$(git --no-pager show -s --format='%an <%ae>' HEAD)
   git fetch origin +gh-pages:gh-pages
   git checkout gh-pages
-  rm -rf docs/current
-  cp -r docs/$version docs/current
+  rm -rf "docs"
+  cp -r "$tmp/docs" .
+  cp -r "docs/$version" docs/current
   git add --all docs
-  echo '<html><head><meta http-equiv="refresh" content="0; url=docs/current/NIO/index.html" /></head></html>' > index.html
+  echo '<html><head><meta http-equiv="refresh" content="0; url=docs/current/CoreMetrics/index.html" /></head></html>' > index.html
   git add index.html
   touch .nojekyll
   git add .nojekyll
   changes=$(git diff-index --name-only HEAD)
   if [[ -n "$changes" ]]; then
+    echo -e "changes detected\n$changes"
     git commit --author="$GIT_AUTHOR" -m "publish $version docs"
     git push origin gh-pages
   else
