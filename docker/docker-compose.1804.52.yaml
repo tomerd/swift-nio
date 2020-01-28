@@ -25,7 +25,6 @@ services:
       - MAX_ALLOCS_ALLOWED_creating_10000_headers=10100
       - MAX_ALLOCS_ALLOWED_scheduling_10000_executions=20150
       - MAX_ALLOCS_ALLOWED_modifying_1000_circular_buffer_elements=50
-      - SANITIZER_ARG=--sanitize=thread
 
   performance-test:
     image: swift-nio:18.04-5.2
